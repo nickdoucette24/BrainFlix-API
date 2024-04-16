@@ -4,28 +4,26 @@ const router = express.Router();
 const videos = [];
 
 // ! Server Endpoints
-// Videos
-app
-  .route("/videos")
-  .get((req, res, next) => {
+// GET and POST for /videos
+router
+  .route("/")
+  .get((req, res) => {
     res.send("GET request received for Videos Array");
-
-    next();
   })
   .post((req, res) => {
     res.send("POST request received for new video");
   });
 
-// Video Details
-app.get("/videos/:id", (req, res, next) => {
+// GET for /videos/:id
+router.get("/:id", (req, res) => {
+  const id = req.params.id;
   res.send("GET request received for Video ID and Details");
-
-  next();
 });
 
 // Delete a Comment
-app.delete("/videos/:videoId/comments/:commentId", (req, res, next) => {
-  next();
+router.delete("/:videoId/comments/:commentId", (req, res) => {
+  const videoId = req.params.videoId;
+  const commentId = req.params.commentId;
 });
 
 module.exports = router;
