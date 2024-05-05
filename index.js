@@ -2,25 +2,23 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const videosRoute = require("./routes/videos");
+require("dotenv").config();
+
+// ! dotenv
+const { PORT } = process.env;
+
+// ! CORS
+app.use(express.json());
+app.use(cors());
 
 // ! Static Images
 app.use(express.static("./public/images"));
 
-// ! CORS
-app.use(cors());
-
 // ! Router
 app.use("/videos", videosRoute);
 
-// ! GET Endpoints
-app.get("/", (req, res, next) => {
-  res.send("GET request received");
-
-  next();
-});
-
 // ! Server Startup
-app.listen(8080, () => {
-  console.log("Server Started on http://localhost:8080");
+app.listen(PORT, () => {
+  console.log(`Server Started on port ${PORT}`);
   console.log("Press Control + C to close the server.");
 });
