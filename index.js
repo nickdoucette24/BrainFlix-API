@@ -12,7 +12,7 @@ app.use(express.json());
 app.use(cors());
 
 // ! Static Images
-app.use(express.static("./public/images"));
+app.use(express.static("public"));
 
 // ! Router
 app.use("/videos", videosRoute);
