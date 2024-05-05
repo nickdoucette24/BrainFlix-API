@@ -28,14 +28,14 @@ router
     }
   })
   .post((req, res) => {
-    const { title, description } = req.body;
+    const { title, description, image } = req.body;
     const newId = uuidv4();
-    const image = `https://www.test.com/`;
     const newVideo = {
       id: newId,
       title,
       description,
-      image: image,
+      channel: "You",
+      image,
     };
 
     try {
@@ -52,11 +52,11 @@ router
 
 // GET video details
 router.get("/:id", (req, res) => {
-  const id = req.params.id;
+  const videoId = req.params.id;
   try {
     const data = fs.readFileSync(dataFilePath, "utf8");
     const videos = JSON.parse(data);
-    const selectedVideo = videos.find((video) => video.id === id);
+    const selectedVideo = videos.find((video) => video.id === videoId);
     if (!selectedVideo) {
       return res.status(404).json({ error: "Video not found" });
     }
@@ -69,17 +69,17 @@ router.get("/:id", (req, res) => {
 
 // GET and POST comments
 router
-  .route("/videos/:id/comments")
+  .route("/:id/comments")
   .get((req, res) => {
-    const id = req.params.id;
+    const videoId = req.params.id;
     try {
       const data = fs.readFileSync(dataFilePath, "utf8");
       const videos = JSON.parse(data);
-      const selectedVideo = videos.find((video) => video.id === id);
-      const comments = selectedVideo.comments;
+      const selectedVideo = videos.find((video) => video.id === videoId);
       if (!selectedVideo) {
         return res.status(404).json({ error: "Video not found" });
       }
+      const comments = selectedVideo.comments || [];
       res.json(comments);
     } catch (error) {
       console.error("Could not retrieve data: ", error);
@@ -87,23 +87,27 @@ router
     }
   })
   .post((req, res) => {
-    const id = req.params.id;
+    const videoId = req.params.id;
     const { name, comment } = req.body;
     const newId = uuidv4();
     const newComment = {
       name,
       comment,
       id: newId,
-      timestamp: new Date(),
+      timestamp: Date.now(),
     };
 
     try {
       const data = fs.readFileSync(dataFilePath, "utf8");
       const videos = JSON.parse(data);
-      const selectedVideo = videos.find((video) => video.id === id);
-      const comments = selectedVideo.comments;
-
-      comments.push(newComment);
+      const videoIndex = videos.findIndex((video) => video.id === videoId);
+      if (videoIndex === -1) {
+        return res.status(404).json({ error: "Video not found" });
+      }
+      const selectedVideo = videos[videoIndex];
+      selectedVideo.comments = selectedVideo.comments || [];
+      selectedVideo.comments.push(newComment);
+      videos[videoIndex] = selectedVideo;
       fs.writeFileSync(dataFilePath, JSON.stringify(videos, null, 2));
       res.status(201).json(newComment);
     } catch (error) {
@@ -119,22 +123,18 @@ router.delete("/:videoId/comments/:commentId", (req, res) => {
   try {
     const data = fs.readFileSync(dataFilePath, "utf8");
     const videos = JSON.parse(data);
-    const selectedVideo = videos.find((video) => video.id === videoId);
-    let commentList = selectedVideo.comments;
-
-    if (!selectedVideo) {
+    const videoIndex = videos.findIndex((video) => video.id === videoId);
+    if (videoIndex === -1) {
       return res.status(404).json({ error: "Video not found" });
     }
-
-    const commentToDelete = commentList.find(
+    const selectedVideo = videos[videoIndex];
+    const commentIndex = selectedVideo.comments.findIndex(
       (comment) => comment.id === commentId
     );
-
-    if (!commentToDelete) {
+    if (commentIndex === -1) {
       return res.status(404).json({ error: "Comment not found" });
     }
-
-    commentList = commentList.filter((comment) => comment.id !== commentId);
+    selectedVideo.comments.splice(commentIndex, 1);
     fs.writeFileSync(dataFilePath, JSON.stringify(videos, null, 2));
     res.send("Comment Deleted Successfully!");
   } catch (error) {
