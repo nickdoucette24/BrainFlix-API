@@ -12,6 +12,8 @@ const dataFilePath = path.join(__dirname, "../data/videos.json");
 router
   .route("/")
   .get((req, res) => {
+    // Read data from file and return as object with specified key
+    // value pairs
     try {
       const data = fs.readFileSync(dataFilePath, "utf8");
       const videos = JSON.parse(data);
@@ -28,6 +30,7 @@ router
     }
   })
   .post((req, res) => {
+    // Take data out of req body and store as a newVideo object
     const { title, description, image } = req.body;
     const newId = uuidv4();
     const newVideo = {
@@ -38,6 +41,7 @@ router
       image,
     };
 
+    // Read and Write to JSON File
     try {
       const data = fs.readFileSync(dataFilePath, "utf8");
       const videos = JSON.parse(data);
@@ -72,6 +76,7 @@ router
   .route("/:id/comments")
   .get((req, res) => {
     const videoId = req.params.id;
+    // Read data from file and check if params id matches
     try {
       const data = fs.readFileSync(dataFilePath, "utf8");
       const videos = JSON.parse(data);
@@ -87,6 +92,8 @@ router
     }
   })
   .post((req, res) => {
+    // Get data from req body and params, assign to newComment object
+    // along with unique ID and timestamp
     const videoId = req.params.id;
     const { name, comment } = req.body;
     const newId = uuidv4();
@@ -97,6 +104,8 @@ router
       timestamp: Date.now(),
     };
 
+    // Read and Write to JSON File
+    // Check index of videos array and mark as selectedVideo so we can pull comments array
     try {
       const data = fs.readFileSync(dataFilePath, "utf8");
       const videos = JSON.parse(data);
@@ -105,6 +114,7 @@ router
         return res.status(404).json({ error: "Video not found" });
       }
       const selectedVideo = videos[videoIndex];
+      // PUSH newComment to correct array of comments on associated video
       selectedVideo.comments = selectedVideo.comments || [];
       selectedVideo.comments.push(newComment);
       videos[videoIndex] = selectedVideo;
@@ -118,8 +128,11 @@ router
 
 // Delete a Comment
 router.delete("/:videoId/comments/:commentId", (req, res) => {
+  // Grab params variables
   const videoId = req.params.videoId;
   const commentId = req.params.commentId;
+
+  // Find index of videos array then find index of the comments array
   try {
     const data = fs.readFileSync(dataFilePath, "utf8");
     const videos = JSON.parse(data);
@@ -134,6 +147,7 @@ router.delete("/:videoId/comments/:commentId", (req, res) => {
     if (commentIndex === -1) {
       return res.status(404).json({ error: "Comment not found" });
     }
+    // Remove specific comment in the comments array and write to file
     selectedVideo.comments.splice(commentIndex, 1);
     fs.writeFileSync(dataFilePath, JSON.stringify(videos, null, 2));
     res.send("Comment Deleted Successfully!");
